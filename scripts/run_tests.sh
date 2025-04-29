@@ -27,7 +27,7 @@ case "$1" in
     load)
         echo "Running load tests..."
         cd tests/load
-        locust -f locustfile.py --headless -u 10 -r 1 --run-time 30s --host http://localhost:8000
+        ./run_locust_test.sh
         ;;
     all)
         echo "Running all tests (except load tests)..."

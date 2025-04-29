@@ -172,3 +172,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+locust_results/
+locust_*.csv
+locust_*.html
