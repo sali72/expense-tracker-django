@@ -1,47 +1,58 @@
-from .models import UserProfile
 from typing import Dict, Any, Optional, Union
 from uuid import UUID
+from .models import UserProfile
 
 
-def get_user_by_id(user_id: Union[str, UUID]) -> Optional[UserProfile]:
+async def get_user_by_id(user_id: Union[str, UUID]) -> Optional[UserProfile]:
     """
     Get a user by ID.
     """
     try:
+        # Convert string ID to UUID if needed
         if isinstance(user_id, str):
             user_id = UUID(user_id)
-        return UserProfile.objects.get(id=user_id)
-    except (ValueError, UserProfile.DoesNotExist):
+
+        # Query using Beanie
+        return await UserProfile.find_one({"id": user_id})
+    except (ValueError, Exception):
         return None
 
 
-def create_user(user_id: Union[str, UUID]) -> Optional[UserProfile]:
+async def create_user(user_id: Union[str, UUID]) -> Optional[UserProfile]:
     """
     Create a new user with the given ID.
     """
     try:
+        # Convert string ID to UUID if needed
         if isinstance(user_id, str):
             user_id = UUID(user_id)
 
         # Check if user already exists
-        if UserProfile.objects.filter(id=user_id).exists():
+        existing_user = await UserProfile.find_one({"id": user_id})
+        if existing_user:
             return None
 
-        # Create user
-        return UserProfile.objects.create(id=user_id)
-    except ValueError:
+        # Create new UserProfile document
+        user = UserProfile(id=user_id)
+
+        # Save to database
+        await user.save()
+        return user
+    except (ValueError, Exception):
         return None
 
 
-def delete_user(user_id: Union[str, UUID]) -> bool:
+async def delete_user(user_id: Union[str, UUID]) -> bool:
     """
     Delete a user. Returns True if successful, False otherwise.
     """
-    user = get_user_by_id(user_id)
+    # Get the user
+    user = await get_user_by_id(user_id)
     if not user:
         return False
 
-    user.delete()
+    # Delete from database
+    await user.delete()
     return True
 
 

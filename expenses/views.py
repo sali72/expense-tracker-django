@@ -1,30 +1,56 @@
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpRequest
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.utils.decorators import async_to_sync
 from users.auth import get_user_id_from_request
 from . import crud
+from config.db import initialize_beanie
+
+
+class AsyncView(View):
+    """Base class for async views"""
+
+    async def dispatch_async(self, request, *args, **kwargs):
+        """Async dispatch method to be implemented by subclasses"""
+        handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        return await handler(request, *args, **kwargs)
+
+    def dispatch(self, request, *args, **kwargs):
+        """Synchronous dispatch that calls the async dispatch"""
+
+        # Initialize Beanie if needed
+        async def initialize():
+            await initialize_beanie()
+
+        # Only initialize once
+        if not hasattr(self.__class__, "_beanie_initialized"):
+            async_to_sync(initialize)()
+            self.__class__._beanie_initialized = True
+
+        # Call the async dispatch method
+        return async_to_sync(self.dispatch_async)(request, *args, **kwargs)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class ExpenseListView(View):
-    def get(self, request) -> JsonResponse:
+class ExpenseListView(AsyncView):
+    async def get(self, request: HttpRequest) -> JsonResponse:
         """Get all expenses for the authenticated user"""
         # Authenticate request
         user_id = get_user_id_from_request(request)
         if not user_id:
             return JsonResponse({"detail": "Authentication failed"}, status=401)
 
-        # Get all expenses using the repository
-        expenses = crud.get_all_expenses(user_id)
+        # Get all expenses
+        expenses = await crud.get_all_expenses(user_id)
 
-        # Serialize expenses using the repository
+        # Serialize expenses
         expenses_data = crud.serialize_expenses(expenses)
 
         return JsonResponse(expenses_data, safe=False)
 
-    def post(self, request) -> JsonResponse:
+    async def post(self, request: HttpRequest) -> JsonResponse:
         """Create a new expense"""
         # Authenticate request
         user_id = get_user_id_from_request(request)
@@ -42,8 +68,8 @@ class ExpenseListView(View):
             if amount is None:
                 return JsonResponse({"detail": "amount is required"}, status=400)
 
-            # Create expense using the repository
-            expense = crud.create_expense(
+            # Create expense
+            expense = await crud.create_expense(
                 user_id=user_id, amount=amount, tag=tag, description=description
             )
 
@@ -57,23 +83,23 @@ class ExpenseListView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class ExpenseDetailView(View):
-    def get(self, request, expense_id) -> JsonResponse:
+class ExpenseDetailView(AsyncView):
+    async def get(self, request: HttpRequest, expense_id: str) -> JsonResponse:
         """Get a specific expense"""
         # Authenticate request
         user_id = get_user_id_from_request(request)
         if not user_id:
             return JsonResponse({"detail": "Authentication failed"}, status=401)
 
-        # Get expense using the repository
-        expense = crud.get_expense_by_id(expense_id, user_id)
+        # Get expense
+        expense = await crud.get_expense_by_id(expense_id, user_id)
         if not expense:
             return JsonResponse({"detail": "expense not found"}, status=404)
 
-        # Return expense using the repository serializer
+        # Return expense
         return JsonResponse(crud.serialize_expense(expense))
 
-    def patch(self, request, expense_id) -> JsonResponse:
+    async def patch(self, request: HttpRequest, expense_id: str) -> JsonResponse:
         """Update an expense"""
         # Authenticate request
         user_id = get_user_id_from_request(request)
@@ -84,8 +110,8 @@ class ExpenseDetailView(View):
         try:
             data = json.loads(request.body)
 
-            # Update expense using the repository
-            expense = crud.update_expense(expense_id, user_id, data)
+            # Update expense
+            expense = await crud.update_expense(expense_id, user_id, data)
             if not expense:
                 return JsonResponse({"detail": "expense not found"}, status=404)
 
@@ -97,15 +123,15 @@ class ExpenseDetailView(View):
         except Exception as e:
             return JsonResponse({"detail": str(e)}, status=400)
 
-    def delete(self, request, expense_id) -> JsonResponse:
+    async def delete(self, request: HttpRequest, expense_id: str) -> JsonResponse:
         """Delete an expense"""
         # Authenticate request
         user_id = get_user_id_from_request(request)
         if not user_id:
             return JsonResponse({"detail": "Authentication failed"}, status=401)
 
-        # Delete expense using the repository
-        expense = crud.delete_expense(expense_id, user_id)
+        # Delete expense
+        expense = await crud.delete_expense(expense_id, user_id)
         if not expense:
             return JsonResponse({"detail": "expense not found"}, status=404)
 

@@ -73,6 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
 
 
 # Database
@@ -136,3 +137,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # JWT Settings
 JWT_SECRET_KEY = config('JWT_SECRET_KEY', default="CHANGE THIS IN PRODUCTION")
 JWT_ALGORITHM = 'HS256'
+
+# MongoDB settings for Beanie (used by the async API)
+MONGODB_NAME = 'expense_tracker_db'
+MONGODB_HOST = 'localhost'
+MONGODB_PORT = 27017

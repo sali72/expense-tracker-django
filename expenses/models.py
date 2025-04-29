@@ -1,35 +1,58 @@
+from typing import Optional
+from datetime import datetime
 import uuid
-from django.db import models
+from uuid import UUID
+from beanie import Document
+from pydantic import Field
 
 
-class ExpenseTag(models.TextChoices):
-    FOOD = 'food', 'Food'
-    TRANSPORTATION = 'transportation', 'Transportation'
-    TRAVEL = 'travel', 'Travel'
-    ENTERTAINMENT = 'entertainment', 'Entertainment'
-    GROCERIES = 'groceries', 'Groceries'
-    LEISURE = 'leisure', 'Leisure'
-    ELECTRONICS = 'electronics', 'Electronics'
-    UTILITIES = 'utilities', 'Utilities'
-    CLOTHING = 'clothing', 'Clothing'
-    HEALTH = 'health', 'Health'
-    OTHER = 'other', 'Other'
+class ExpenseTag:
+    """Tags for expense categorization"""
+
+    FOOD = "food"
+    TRANSPORTATION = "transportation"
+    TRAVEL = "travel"
+    ENTERTAINMENT = "entertainment"
+    GROCERIES = "groceries"
+    LEISURE = "leisure"
+    ELECTRONICS = "electronics"
+    UTILITIES = "utilities"
+    CLOTHING = "clothing"
+    HEALTH = "health"
+    OTHER = "other"
+
+    CHOICES = [
+        FOOD,
+        TRANSPORTATION,
+        TRAVEL,
+        ENTERTAINMENT,
+        GROCERIES,
+        LEISURE,
+        ELECTRONICS,
+        UTILITIES,
+        CLOTHING,
+        HEALTH,
+        OTHER,
+    ]
 
 
-class Expense(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    amount = models.FloatField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    tag = models.CharField(
-        max_length=20,
-        choices=ExpenseTag.choices,
-        default=ExpenseTag.OTHER
-    )
-    description = models.TextField(blank=True, null=True)
-    user_id = models.UUIDField()
+class Expense(Document):
+    """Document model for expenses"""
 
-    class Meta:
-        ordering = ['-created_at']
+    id: UUID = Field(default_factory=uuid.uuid4)
+    amount: float
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    tag: str = ExpenseTag.OTHER
+    description: Optional[str] = None
+    user_id: UUID
+
+    class Settings:
+        name = "expenses"  # Collection name in MongoDB
+        use_state_management = True
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def __str__(self):
+        """String representation of the expense"""
         return f"{self.amount} - {self.tag} - {self.created_at.strftime('%Y-%m-%d')}"

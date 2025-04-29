@@ -1,49 +1,72 @@
-from .models import Expense
 from typing import List, Dict, Any, Optional, Union
 from uuid import UUID
+from .models import Expense
 
 
-def get_expense_by_id(expense_id: Union[str, UUID], user_id: UUID) -> Optional[Expense]:
+async def get_expense_by_id(
+    expense_id: Union[str, UUID], user_id: Union[str, UUID]
+) -> Optional[Expense]:
     """
     Get an expense by ID for a specific user.
     """
     try:
+        # Convert string IDs to UUID if needed
         if isinstance(expense_id, str):
             expense_id = UUID(expense_id)
-        return Expense.objects.get(id=expense_id, user_id=user_id)
-    except (ValueError, Expense.DoesNotExist):
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+
+        # Query using Beanie
+        return await Expense.find_one({"id": expense_id, "user_id": user_id})
+    except (ValueError, Exception):
         return None
 
 
-def get_all_expenses(user_id: UUID) -> List[Expense]:
+async def get_all_expenses(user_id: Union[str, UUID]) -> List[Expense]:
     """
     Get all expenses for a user.
     """
-    return list(Expense.objects.filter(user_id=user_id))
+    if isinstance(user_id, str):
+        try:
+            user_id = UUID(user_id)
+        except ValueError:
+            return []
+
+    # Query using Beanie and convert to list
+    expenses = await Expense.find({"user_id": user_id}).sort("-created_at").to_list()
+    return expenses
 
 
-def create_expense(
-    user_id: UUID, amount: float, tag: str = None, description: str = None
+async def create_expense(
+    user_id: Union[str, UUID], amount: float, tag: str = None, description: str = None
 ) -> Expense:
     """
     Create a new expense for a user.
     """
-    return Expense.objects.create(
-        user_id=user_id, amount=amount, tag=tag, description=description
-    )
+    # Convert string ID to UUID if needed
+    if isinstance(user_id, str):
+        user_id = UUID(user_id)
+
+    # Create new Expense document
+    expense = Expense(amount=amount, tag=tag, description=description, user_id=user_id)
+
+    # Save to database
+    await expense.save()
+    return expense
 
 
-def update_expense(
-    expense_id: Union[str, UUID], user_id: UUID, data: Dict[str, Any]
+async def update_expense(
+    expense_id: Union[str, UUID], user_id: Union[str, UUID], data: Dict[str, Any]
 ) -> Optional[Expense]:
     """
     Update an expense with the provided data.
     """
-    expense = get_expense_by_id(expense_id, user_id)
+    # Get the expense
+    expense = await get_expense_by_id(expense_id, user_id)
     if not expense:
         return None
 
-    # Update fields if provided
+    # Update fields
     if "amount" in data:
         expense.amount = data["amount"]
     if "tag" in data:
@@ -51,21 +74,27 @@ def update_expense(
     if "description" in data:
         expense.description = data["description"]
 
-    expense.save()
+    # Save changes
+    await expense.save()
     return expense
 
 
-def delete_expense(expense_id: Union[str, UUID], user_id: UUID) -> Optional[Expense]:
+async def delete_expense(
+    expense_id: Union[str, UUID], user_id: Union[str, UUID]
+) -> Optional[Expense]:
     """
     Delete an expense. Returns the expense data if successful, None otherwise.
     """
-    expense = get_expense_by_id(expense_id, user_id)
+    # Get the expense
+    expense = await get_expense_by_id(expense_id, user_id)
     if not expense:
         return None
 
-    # Store expense data before deletion
+    # Store expense for return value
     deleted_expense = expense
-    expense.delete()
+
+    # Delete from database
+    await expense.delete()
     return deleted_expense
 
 
