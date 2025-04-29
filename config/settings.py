@@ -80,12 +80,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='expense_tracker'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='postgres'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+        'ENGINE': 'djongo',
+        'NAME': 'expense_tracker_db',
+        'HOST': 'localhost',
+        'PORT': 27017,
+        # If your MongoDB requires authentication:
+        # 'USER': 'your_username',
+        # 'PASSWORD': 'your_password',
+        # 'AUTH_SOURCE': 'admin',
     }
 }
 
