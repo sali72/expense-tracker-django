@@ -1,14 +1,14 @@
 import json
 from django.http import JsonResponse, HttpRequest
+from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .auth import get_user_id_from_request
 from . import crud
-from expenses.views import AsyncView
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class TestAuthView(AsyncView):
+class TestAuthView(View):
     async def get(self, request: HttpRequest) -> JsonResponse:
         """Test authentication endpoint"""
         user_id = get_user_id_from_request(request)
@@ -19,7 +19,7 @@ class TestAuthView(AsyncView):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class UserView(AsyncView):
+class UserView(View):
     async def post(self, request: HttpRequest) -> JsonResponse:
         """Create a new user"""
         try:

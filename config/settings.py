@@ -79,9 +79,11 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Using MongoDB with Beanie for async operations
+# Note: Django's ORM is not used with MongoDB/Beanie
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
+        'ENGINE': 'django.db.backends.dummy',  # Dummy backend since we're using Beanie instead of Django ORM
         'NAME': 'expense_tracker_db',
         'HOST': 'localhost',
         'PORT': 27017,
@@ -139,6 +141,11 @@ JWT_SECRET_KEY = config('JWT_SECRET_KEY', default="CHANGE THIS IN PRODUCTION")
 JWT_ALGORITHM = 'HS256'
 
 # MongoDB settings for Beanie (used by the async API)
+# These settings are used in config/db.py to initialize Beanie
 MONGODB_NAME = 'expense_tracker_db'
 MONGODB_HOST = 'localhost'
 MONGODB_PORT = 27017
+# If your MongoDB requires authentication:
+# MONGODB_USERNAME = 'your_username'
+# MONGODB_PASSWORD = 'your_password'
+# MONGODB_AUTH_SOURCE = 'admin'
