@@ -6,15 +6,15 @@ from users.models import UserProfile
 
 
 @pytest.fixture(scope="function", autouse=True)
-def clean_users_collection():
+async def clean_users_collection():
     """
     Clear the users collection before each test.
     """
-    UserProfile.objects.all().delete()
+    await UserProfile.find_all().delete()
 
 
-@pytest.mark.django_db
-def test_create_user(client):
+@pytest.mark.asyncio
+async def test_create_user(client):
     """
     Test creating a user.
     """
@@ -32,18 +32,19 @@ def test_create_user(client):
     assert response.status_code == 201
     response_data = json.loads(response.content)
     assert response_data["id"] == user_id
-    assert UserProfile.objects.count() == 1
+    assert await UserProfile.find_all().count() == 1
 
 
-@pytest.mark.django_db
-def test_create_existing_user(client):
+@pytest.mark.asyncio
+async def test_create_existing_user(client):
     """
     Test creating a user that already exists.
     """
     user_id = str(uuid.uuid4())
     
     # Create user first
-    UserProfile.objects.create(id=user_id)
+    user = UserProfile(id=uuid.UUID(user_id))
+    await user.save()
     
     # Try to create again
     data = {
@@ -60,15 +61,16 @@ def test_create_existing_user(client):
     assert "user already exists" in str(response.content)
 
 
-@pytest.mark.django_db
-def test_delete_user(client):
+@pytest.mark.asyncio
+async def test_delete_user(client):
     """
     Test deleting a user.
     """
     user_id = str(uuid.uuid4())
     
     # Create user first
-    UserProfile.objects.create(id=user_id)
+    user = UserProfile(id=uuid.UUID(user_id))
+    await user.save()
     
     # Delete user
     response = client.delete(f"/api/users/?id={user_id}")
@@ -76,11 +78,11 @@ def test_delete_user(client):
     assert response.status_code == 200
     response_data = json.loads(response.content)
     assert response_data["message"] == "user deleted"
-    assert UserProfile.objects.count() == 0
+    assert await UserProfile.find_all().count() == 0
 
 
-@pytest.mark.django_db
-def test_delete_nonexistent_user(client):
+@pytest.mark.asyncio
+async def test_delete_nonexistent_user(client):
     """
     Test deleting a user that doesn't exist.
     """
@@ -91,8 +93,8 @@ def test_delete_nonexistent_user(client):
     assert "user not found" in str(response.content)
 
 
-@pytest.mark.django_db
-def test_auth_test(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_auth_test(client, test_user, auth_headers):
     """
     Test the auth test endpoint.
     """

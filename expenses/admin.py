@@ -1,8 +1,4 @@
-from django.contrib import admin
-from .models import Expense
+# Admin functionality is not available with Beanie Document models
+# since they don't integrate with Django's admin system
 
-@admin.register(Expense)
-class ExpenseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'amount', 'tag', 'created_at', 'user_id')
-    list_filter = ('tag', 'created_at')
-    search_fields = ('description', 'tag')
+# If admin access is needed, a custom admin interface would need to be built

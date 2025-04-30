@@ -5,15 +5,15 @@ from expenses.models import Expense
 
 
 @pytest.fixture(scope="function", autouse=True)
-def clean_expenses_collection():
+async def clean_expenses_collection():
     """
     Clear the expenses collection before each test.
     """
-    Expense.objects.all().delete()
+    await Expense.find_all().delete()
 
 
-@pytest.mark.django_db
-def test_create_expense(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_create_expense(client, test_user, auth_headers):
     """
     Test creating an expense.
     """
@@ -35,11 +35,11 @@ def test_create_expense(client, test_user, auth_headers):
     assert response_data["amount"] == 100
     assert response_data["description"] == "Test expense"
     assert response_data["tag"] == "food"
-    assert Expense.objects.count() == 1
+    assert await Expense.find_all().count() == 1
 
 
-@pytest.mark.django_db
-def test_get_expenses(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_get_expenses(client, test_user, auth_headers):
     """
     Test getting all expenses for a user.
     """
@@ -51,8 +51,8 @@ def test_get_expenses(client, test_user, auth_headers):
     assert len(response_data) == 0
 
 
-@pytest.mark.django_db
-def test_get_expenses_with_expenses(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_get_expenses_with_expenses(client, test_user, auth_headers):
     """
     Test getting all expenses for a user with existing expenses.
     """
@@ -82,8 +82,8 @@ def test_get_expenses_with_expenses(client, test_user, auth_headers):
     assert response_data[0]["id"] == expense_id
 
 
-@pytest.mark.django_db
-def test_get_expense(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_get_expense(client, test_user, auth_headers):
     """
     Test getting a specific expense.
     """
@@ -113,8 +113,8 @@ def test_get_expense(client, test_user, auth_headers):
     assert response_data["description"] == "Test expense"
 
 
-@pytest.mark.django_db
-def test_get_nonexistent_expense(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_get_nonexistent_expense(client, test_user, auth_headers):
     """
     Test getting an expense that doesn't exist.
     """
@@ -124,8 +124,8 @@ def test_get_nonexistent_expense(client, test_user, auth_headers):
     assert response.status_code == 404
 
 
-@pytest.mark.django_db
-def test_update_expense(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_update_expense(client, test_user, auth_headers):
     """
     Test updating an expense.
     """
@@ -166,8 +166,8 @@ def test_update_expense(client, test_user, auth_headers):
     assert response_data["tag"] == "food"  # Should be unchanged
 
 
-@pytest.mark.django_db
-def test_update_nonexistent_expense(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_update_nonexistent_expense(client, test_user, auth_headers):
     """
     Test updating an expense that doesn't exist.
     """
@@ -186,8 +186,8 @@ def test_update_nonexistent_expense(client, test_user, auth_headers):
     assert response.status_code == 404
 
 
-@pytest.mark.django_db
-def test_delete_expense(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_delete_expense(client, test_user, auth_headers):
     """
     Test deleting an expense.
     """
@@ -215,11 +215,11 @@ def test_delete_expense(client, test_user, auth_headers):
     assert response_data["id"] == expense_id
     
     # Verify it's gone
-    assert Expense.objects.count() == 0
+    assert await Expense.find_all().count() == 0
 
 
-@pytest.mark.django_db
-def test_delete_nonexistent_expense(client, test_user, auth_headers):
+@pytest.mark.asyncio
+async def test_delete_nonexistent_expense(client, test_user, auth_headers):
     """
     Test deleting an expense that doesn't exist.
     """

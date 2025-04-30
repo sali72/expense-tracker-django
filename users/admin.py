@@ -1,7 +1,4 @@
-from django.contrib import admin
-from .models import UserProfile
+# Admin functionality is not available with Beanie Document models
+# since they don't integrate with Django's admin system
 
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('id',)
-    search_fields = ('id',)
+# If admin access is needed, a custom admin interface would need to be built
