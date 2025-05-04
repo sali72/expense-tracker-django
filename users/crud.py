@@ -18,6 +18,14 @@ async def get_user_by_id(user_id: Union[str, UUID]) -> Optional[UserProfile]:
         return None
 
 
+# Add alias for consistency with views.py
+async def get_user(user_id: Union[str, UUID]) -> Optional[UserProfile]:
+    """
+    Alias for get_user_by_id.
+    """
+    return await get_user_by_id(user_id)
+
+
 async def create_user(user_id: Union[str, UUID]) -> Optional[UserProfile]:
     """
     Create a new user with the given ID.

@@ -52,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'users.auth.JWTAuthMiddleware',  # JWT authentication middleware
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -139,6 +140,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # JWT Settings
 JWT_SECRET_KEY = config('JWT_SECRET_KEY', default="CHANGE THIS IN PRODUCTION")
 JWT_ALGORITHM = 'HS256'
+JWT_ACCESS_TOKEN_LIFETIME = 24 * 60 * 60  # 24 hours in seconds
 
 # MongoDB settings for Beanie (used by the async API)
 # These settings are used in config/db.py to initialize Beanie
